@@ -1,0 +1,44 @@
+{
+  "name": "backend-project-lvl3",
+  "version": "1.0.0",
+  "description": "Third hexlet NodeJs project",
+  "type": "module",
+  "bin": {
+    "page-loader": "bin/index.js"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "gh:alex-popov-tech/backend-project-lvl3"
+  },
+  "keywords": [
+    "hexlet",
+    "nodejs"
+  ],
+  "author": "Alexander Popov",
+  "license": "ISC",
+  "devDependencies": {
+    "@rowno/http-stub": "^1.2.0",
+    "axios-mock-adapter": "^1.18.1",
+    "babel-jest": "^26.0.1",
+    "eslint": "^7.1.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-jest": "^23.13.2",
+    "husky": "^4.2.5",
+    "jest": "^26.0.1",
+    "nock": "^12.0.3",
+    "sinon": "^9.0.2"
+  },
+  "dependencies": {
+    "@babel/cli": "^7.10.1",
+    "@babel/core": "^7.10.2",
+    "@babel/polyfill": "^7.10.1",
+    "@babel/preset-env": "^7.10.2",
+    "axios": "^0.19.2",
+    "commander": "^5.1.0",
+    "lodash": "^4.17.15"
+  }
+}
