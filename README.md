@@ -8,7 +8,7 @@
 
 ## Download page
 
-[![asciicast](https://asciinema.org/a/jPbI7tUokD59MKB6StIqyQo7j.svg)](https://asciinema.org/a/jPbI7tUokD59MKB6StIqyQo7j)
+[![asciicast](https://asciinema.org/a/gwTmYEE1clEOYlZsDvBxoH8Xl.svg)](https://asciinema.org/a/gwTmYEE1clEOYlZsDvBxoH8Xl)
 
 # Installation
 
