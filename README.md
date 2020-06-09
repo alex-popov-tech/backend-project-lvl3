@@ -10,6 +10,14 @@
 
 [![asciicast](https://asciinema.org/a/gwTmYEE1clEOYlZsDvBxoH8Xl.svg)](https://asciinema.org/a/gwTmYEE1clEOYlZsDvBxoH8Xl)
 
+## Download failed cause of FS error
+
+[![asciicast](https://asciinema.org/a/hVCvd9tXBNh7kkRDTD9JBV9ax.svg)](https://asciinema.org/a/hVCvd9tXBNh7kkRDTD9JBV9ax)
+
+## Download failed cause of network error
+
+[![asciicast](https://asciinema.org/a/ShSIQwfPuSYfFkR9vnbns6YSH.svg)](https://asciinema.org/a/ShSIQwfPuSYfFkR9vnbns6YSH)
+
 # Installation
 
 ```sh

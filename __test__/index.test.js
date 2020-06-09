@@ -1,6 +1,7 @@
 import { readFile } from 'fs-extra';
 import nock from 'nock';
 import { tmpdir } from 'os';
+import { fail } from 'assert';
 import download from '../src/index.js';
 
 
@@ -10,19 +11,34 @@ const shouldHaveContent = async (filepath, content) => expect(
   await readFile(filepath).then((buffer) => buffer.toString().trim()),
 ).toEqual(content);
 
-const mock = ({ host, path, body }) => nock(host)
+const mockResponse = ({
+  host,
+  path,
+  status,
+  body,
+}) => nock(host)
   .get(path)
-  .reply(200, body, { 'Access-Control-Allow-Origin': '*' })
-  .log(console.log);
+  .reply(status, body, { 'Access-Control-Allow-Origin': '*' });
 
-test('Download real page', async () => {
-  mock({
+test('page with resources happy path', async () => {
+  mockResponse({
     host: 'http://test.com',
     path: '/tryit',
+    status: 200,
     body: '<html><head><script src="/js/script.js"></script><style src="/css/style.css"></style></head></html>',
   });
-  mock({ host: 'http://test.com', path: '/tryit/css/style.css', body: '.foo color: red' });
-  mock({ host: 'http://test.com', path: '/tryit/js/script.js', body: 'console.log("hello!")' });
+  mockResponse({
+    host: 'http://test.com',
+    path: '/tryit/css/style.css',
+    status: 200,
+    body: '.foo color: red',
+  });
+  mockResponse({
+    host: 'http://test.com',
+    path: '/tryit/js/script.js',
+    status: 200,
+    body: 'console.log("hello!")',
+  });
   await download('http://test.com/tryit', outputDir);
   await shouldHaveContent(
     `${outputDir}/test-com-tryit.html`,
@@ -30,4 +46,59 @@ test('Download real page', async () => {
   );
   await shouldHaveContent(`${outputDir}/test-com-tryit_files/js-script.js`, 'console.log("hello!")');
   await shouldHaveContent(`${outputDir}/test-com-tryit_files/css-style.css`, '.foo color: red');
+});
+
+test('page failed', async () => {
+  mockResponse({
+    host: 'http://test.com',
+    path: '/',
+    status: 403,
+    body: '<html><body>404 page not found</body></html>',
+  });
+  await download('http://test.com').then(
+    () => fail('That should throw an error'),
+    ({ message }) => expect(message.split('\n')).toEqual([
+      'Error ocurred when trying to download "http://test.com"',
+      'Reason - "Request failed with status code 403"',
+    ]),
+  );
+});
+
+
+test('asset failed', async () => {
+  mockResponse({
+    host: 'http://test.com',
+    path: '/',
+    status: 200,
+    body: '<html><head><script src="/script.js"></script></head></html>',
+  });
+  mockResponse({
+    host: 'http://test.com',
+    path: '/script.js',
+    status: 500,
+    body: '',
+  });
+  await download('http://test.com', outputDir).then(
+    () => fail('That should throw an error'),
+    ({ message }) => expect(message.split('\n')).toEqual([
+      'Error ocurred when trying to download "http://test.com/script.js"',
+      'Reason - "Request failed with status code 500"',
+    ]),
+  );
+});
+
+test('failed to save', async () => {
+  mockResponse({
+    host: 'http://test.com',
+    path: '/',
+    status: 200,
+    body: '<html></html>',
+  });
+  await download('http://test.com', '/').then(
+    () => fail('That should throw an error'),
+    ({ message }) => expect(message.split('\n')).toEqual([
+      'Error ocurred when trying to write: "/test-com.html"',
+      `Reason - "EROFS: read-only file system, open '/test-com.html'"`,
+    ]),
+  );
 });

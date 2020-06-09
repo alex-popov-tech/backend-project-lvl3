@@ -1,13 +1,22 @@
 import axios from 'axios';
+import 'axios-debug-log';
 import $ from 'cheerio';
 import debug from 'debug';
 import fs from 'fs-extra';
 import path from 'path';
-import 'axios-debug-log';
 
 const log = debug('page-loader');
 
-const download = (url) => axios.get(url).then((response) => response.data);
+const download = (url) => axios.get(url)
+  .then((response) => response.data)
+  .catch(({ message }) => {
+    throw new Error(`Error ocurred when trying to download "${url}"\nReason - "${message}"`);
+  });
+
+const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
+  .catch(({ message }) => {
+    throw new Error(`Error ocurred when trying to write: "${filepath}"\nReason - "${message}"`);
+  });
 
 const generatePagePath = (outputDir, { host, pathname }) => {
   const urlPath = pathname === '/' ? '' : pathname;
@@ -44,7 +53,8 @@ const toAbsoluteUrl = (relativeAssetUrls, { origin, pathname }) => {
 export default (urlString, outputDir) => download(urlString)
   .then((html) => {
     const url = new URL(urlString);
-    log(`Passed URL: ${url}`);
+    log(`Passed URL: ${url.toJSON()}`);
+    log(`Passed output dir: ${outputDir}`);
 
     const relativeAssetUrls = getAssetSources(html);
     const absoluteAssetUrls = toAbsoluteUrl(relativeAssetUrls, url);
@@ -63,6 +73,6 @@ export default (urlString, outputDir) => download(urlString)
         assets: assetContents.map((content, i) => ({ filepath: assetFilePaths[i], content })),
       }));
   }).then(({ page, assets }) => Promise.all([
-    fs.outputFile(page.filepath, page.content),
-    ...assets.map(({ filepath, content }) => fs.outputFile(filepath, content)),
+    ensureFile(page.filepath, page.content),
+    ...assets.map(({ filepath, content }) => ensureFile(filepath, content)),
   ]));
