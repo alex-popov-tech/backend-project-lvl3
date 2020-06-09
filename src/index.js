@@ -8,7 +8,7 @@ const download = (url) => axios.get(url).then((response) => response.data);
 
 const generatePagePath = (outputDir, { host, pathname }) => {
   const urlPath = pathname === '/' ? '' : pathname;
-  const filename = `${host}${urlPath}`.replace(/[\/\.]/g, '-');
+  const filename = `${host}${urlPath}`.replace(/[/.]/g, '-');
   const fileext = '.html';
   return path.resolve(outputDir, `${filename}${fileext}`);
 };

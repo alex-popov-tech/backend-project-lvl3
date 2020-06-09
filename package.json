@@ -21,7 +21,9 @@
   "license": "ISC",
   "devDependencies": {
     "babel-jest": "^26.0.1",
-    "eslint": "^7.1.0",
+    "eslint": "^7.2.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-jest": "^23.13.2",
     "husky": "^4.2.5",
     "jest": "^26.0.1",
@@ -29,8 +31,6 @@
   },
   "dependencies": {
     "@babel/cli": "^7.10.1",
-    "eslint-config-airbnb-base": "^14.1.0",
-    "eslint-plugin-import": "^2.20.2",
     "@babel/core": "^7.10.2",
     "@babel/polyfill": "^7.10.1",
     "@babel/preset-env": "^7.10.2",
