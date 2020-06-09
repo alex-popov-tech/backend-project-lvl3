@@ -98,6 +98,7 @@ test('failed to save', async () => {
     () => fail('That should throw an error'),
     ({ message }) => expect(message.split('\n')).toEqual([
       'Error ocurred when trying to write: "/test-com.html"',
+      // eslint-disable-next-line quotes
       `Reason - "EROFS: read-only file system, open '/test-com.html'"`,
     ]),
   );
