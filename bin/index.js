@@ -14,5 +14,6 @@ commander
       console.error(error.message);
       process.exit(1);
     }
+    process.exit(0);
   })
   .parse(process.argv);

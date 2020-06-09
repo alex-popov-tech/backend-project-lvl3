@@ -3,12 +3,14 @@ import 'axios-debug-log';
 import $ from 'cheerio';
 import debug from 'debug';
 import fs from 'fs-extra';
+import Listr from 'listr';
 import path from 'path';
+
 
 const log = debug('page-loader');
 
 const download = (url) => axios.get(url)
-  .then((response) => response.data)
+  .then(({ data }) => data)
   .catch(({ message }) => {
     throw new Error(`Error ocurred when trying to download "${url}"\nReason - "${message}"`);
   });
@@ -67,11 +69,18 @@ export default (urlString, outputDir) => download(urlString)
 
     const updatedHtml = replaceHtmlSources(html, relativeAssetUrls, assetFilePaths);
 
-    return Promise.all(absoluteAssetUrls.map((absAssetUrls) => download(absAssetUrls)))
-      .then((assetContents) => ({
-        page: { filepath: pageFilePath, content: updatedHtml },
-        assets: assetContents.map((content, i) => ({ filepath: assetFilePaths[i], content })),
-      }));
+    const assetContents = [];
+    const tasks = absoluteAssetUrls.map((assetUrl, i) => ({
+      title: `Dowloading ${assetUrl}...`,
+      task: () => download(assetUrl).then((content) => {
+        assetContents[i] = content;
+      }),
+    }));
+    const listr = new Listr(tasks, { concurrent: true });
+    return listr.run().then(() => ({
+      page: { filepath: pageFilePath, content: updatedHtml },
+      assets: assetContents.map((content, i) => ({ filepath: assetFilePaths[i], content })),
+    }));
   }).then(({ page, assets }) => Promise.all([
     ensureFile(page.filepath, page.content),
     ...assets.map(({ filepath, content }) => ensureFile(filepath, content)),

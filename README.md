@@ -8,7 +8,7 @@
 
 ## Download page
 
-[![asciicast](https://asciinema.org/a/gwTmYEE1clEOYlZsDvBxoH8Xl.svg)](https://asciinema.org/a/gwTmYEE1clEOYlZsDvBxoH8Xl)
+[![asciicast](https://asciinema.org/a/eD3XHYEL6WiPWL50IzIerxchH.svg)](https://asciinema.org/a/eD3XHYEL6WiPWL50IzIerxchH)
 
 ## Download failed cause of FS error
 
