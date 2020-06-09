@@ -12,7 +12,8 @@ const shouldHaveContent = async (filepath, content) => expect(
 
 const mock = ({ host, path, body }) => nock(host)
   .get(path)
-  .reply(200, body, { 'Access-Control-Allow-Origin': '*' });
+  .reply(200, body, { 'Access-Control-Allow-Origin': '*' })
+  .log(console.log);
 
 test('Download real page', async () => {
   mock({

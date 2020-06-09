@@ -20,7 +20,9 @@
   "author": "Alexander Popov",
   "license": "ISC",
   "devDependencies": {
+    "axios-debug-log": "^0.7.0",
     "babel-jest": "^26.0.1",
+    "debug": "^4.1.1",
     "eslint": "^7.2.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",

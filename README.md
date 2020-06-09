@@ -18,6 +18,10 @@ npm install -g page-loader
 
 # Development
 
+## Enable logging
+
+[![asciicast](https://asciinema.org/a/Qwjy24h0k2qFQK4KqO5JPECqd.svg)](https://asciinema.org/a/Qwjy24h0k2qFQK4KqO5JPECqd)
+
 ## Setup
 
 ```sh

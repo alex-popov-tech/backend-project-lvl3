@@ -1,8 +1,11 @@
 import axios from 'axios';
 import $ from 'cheerio';
+import debug from 'debug';
 import fs from 'fs-extra';
 import path from 'path';
+import 'axios-debug-log';
 
+const log = debug('page-loader');
 
 const download = (url) => axios.get(url).then((response) => response.data);
 
@@ -41,12 +44,16 @@ const toAbsoluteUrl = (relativeAssetUrls, { origin, pathname }) => {
 export default (urlString, outputDir) => download(urlString)
   .then((html) => {
     const url = new URL(urlString);
+    log(`Passed URL: ${url}`);
 
     const relativeAssetUrls = getAssetSources(html);
     const absoluteAssetUrls = toAbsoluteUrl(relativeAssetUrls, url);
+    log(`Assets found on a page: [${absoluteAssetUrls.join(', ')}]`);
 
     const pageFilePath = generatePagePath(outputDir, url);
+    log(`Html file path: ${pageFilePath}`);
     const assetFilePaths = generateAssetsPath(pageFilePath, relativeAssetUrls);
+    log(`Assets file paths: [${assetFilePaths.join(', ')}]`);
 
     const updatedHtml = replaceHtmlSources(html, relativeAssetUrls, assetFilePaths);
 
@@ -55,8 +62,7 @@ export default (urlString, outputDir) => download(urlString)
         page: { filepath: pageFilePath, content: updatedHtml },
         assets: assetContents.map((content, i) => ({ filepath: assetFilePaths[i], content })),
       }));
-  })
-  .then(({ page, assets }) => Promise.all([
+  }).then(({ page, assets }) => Promise.all([
     fs.outputFile(page.filepath, page.content),
     ...assets.map(({ filepath, content }) => fs.outputFile(filepath, content)),
   ]));
