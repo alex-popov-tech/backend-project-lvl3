@@ -52,13 +52,12 @@ test('page failed', async () => {
     host: 'http://test.com',
     path: '/',
     status: 403,
-    body: '<html><body>404 page not found</body></html>',
+    body: '<html><body>403 Unauthorized</body></html>',
   });
-  expect(download('http://test.com', outputDir))
+  await expect(download('http://test.com', outputDir))
     .rejects
     .toThrow('Error ocurred when trying to download "http://test.com"\nReason - "Request failed with status code 403"');
 });
-
 
 test('asset failed', async () => {
   mockResponse({
@@ -73,7 +72,7 @@ test('asset failed', async () => {
     status: 500,
     body: '',
   });
-  expect(download('http://test.com', outputDir))
+  await expect(download('http://test.com', outputDir))
     .rejects
     .toThrow('Error ocurred when trying to download "http://test.com/script.js"\nReason - "Request failed with status code 500"');
 });

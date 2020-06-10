@@ -3,11 +3,11 @@ import Listr from 'listr';
 import {
   download,
   ensureFile,
-  generateAssetsPath,
-  generatePagePath,
-  getAssetSources,
   replaceHtmlSources,
-  toAbsoluteUrl,
+  getAssetRelativeUrls,
+  toAbsoluteAssetUrl,
+  generatePageFilePath,
+  generateAssetFilePaths,
 } from './utils.js';
 
 const log = debug('page-loader');
@@ -19,13 +19,13 @@ export default (urlString, outputDir) => download(urlString)
     log(`Passed URL: ${url.toJSON()}`);
     log(`Passed output dir: ${outputDir}`);
 
-    const relativeAssetUrls = getAssetSources(html);
-    const absoluteAssetUrls = toAbsoluteUrl(relativeAssetUrls, url);
+    const relativeAssetUrls = getAssetRelativeUrls(html);
+    const absoluteAssetUrls = toAbsoluteAssetUrl(relativeAssetUrls, url);
     log(`Assets found on a page: [${absoluteAssetUrls.join(', ')}]`);
 
-    const pageFilePath = generatePagePath(outputDir, url);
+    const pageFilePath = generatePageFilePath(outputDir, url);
     log(`Html file path: ${pageFilePath}`);
-    const assetFilePaths = generateAssetsPath(pageFilePath, relativeAssetUrls);
+    const assetFilePaths = generateAssetFilePaths(pageFilePath, relativeAssetUrls);
     log(`Assets file paths: [${assetFilePaths.join(', ')}]`);
 
     const updatedHtml = replaceHtmlSources(html, relativeAssetUrls, assetFilePaths);
