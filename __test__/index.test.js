@@ -94,12 +94,12 @@ test('failed to save', async () => {
     status: 200,
     body: '<html></html>',
   });
-  await download('http://test.com', '/kek').then(
+  await download('http://test.com', '/bin').then(
     () => fail('That should throw an error'),
     ({ message }) => expect(message.split('\n')).toEqual([
-      'Error ocurred when trying to write: "/kek/test-com.html"',
+      'Error ocurred when trying to write: "/bin/test-com.html"',
       // eslint-disable-next-line quotes
-      `Reason - "ENOENT: no such file or directory, mkdir '/kek'"`,
+      `Reason - "EPERM: operation not permitted, open '/bin/test-com.html'"`,
     ]),
   );
 });
