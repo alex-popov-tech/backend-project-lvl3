@@ -1,7 +1,6 @@
 import { readFile } from 'fs-extra';
 import nock from 'nock';
 import { tmpdir } from 'os';
-import { fail } from 'assert';
 import download from '../src/index.js';
 
 
@@ -55,13 +54,9 @@ test('page failed', async () => {
     status: 403,
     body: '<html><body>404 page not found</body></html>',
   });
-  await download('http://test.com').then(
-    () => fail('That should throw an error'),
-    ({ message }) => expect(message.split('\n')).toEqual([
-      'Error ocurred when trying to download "http://test.com"',
-      'Reason - "Request failed with status code 403"',
-    ]),
-  );
+  expect(download('http://test.com', outputDir))
+    .rejects
+    .toThrow('Error ocurred when trying to download "http://test.com"\nReason - "Request failed with status code 403"');
 });
 
 
@@ -78,13 +73,9 @@ test('asset failed', async () => {
     status: 500,
     body: '',
   });
-  await download('http://test.com', outputDir).then(
-    () => fail('That should throw an error'),
-    ({ message }) => expect(message.split('\n')).toEqual([
-      'Error ocurred when trying to download "http://test.com/script.js"',
-      'Reason - "Request failed with status code 500"',
-    ]),
-  );
+  expect(download('http://test.com', outputDir))
+    .rejects
+    .toThrow('Error ocurred when trying to download "http://test.com/script.js"\nReason - "Request failed with status code 500"');
 });
 
 test('failed to save', async () => {
@@ -94,12 +85,7 @@ test('failed to save', async () => {
     status: 200,
     body: '<html></html>',
   });
-  await download('http://test.com', '/bin').then(
-    () => fail('That should throw an error'),
-    ({ message }) => expect(message.split('\n')).toEqual([
-      'Error ocurred when trying to write: "/bin/test-com.html"',
-      // eslint-disable-next-line quotes
-      `Reason - "EPERM: operation not permitted, open '/bin/test-com.html'"`,
-    ]),
-  );
+  expect(download('http://test.com', '/bin'))
+    .rejects
+    .toThrow('Error ocurred when trying to write: "/bin/test-com.html"\nReason - "');
 });

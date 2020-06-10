@@ -5,6 +5,7 @@ import debug from 'debug';
 import fs from 'fs-extra';
 import Listr from 'listr';
 import path from 'path';
+import axiosDebug from 'axios-debug-log';
 
 
 const log = debug('page-loader');
