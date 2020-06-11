@@ -4,7 +4,6 @@ import $ from 'cheerio';
 import fs from 'fs-extra';
 import path from 'path';
 
-
 export const download = (url) => axios.get(url)
   .then(({ data }) => data)
   .catch(({ message }) => {

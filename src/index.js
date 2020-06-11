@@ -12,7 +12,6 @@ import {
 
 const log = debug('page-loader');
 
-
 export default (urlString, outputDir) => download(urlString)
   .then((html) => {
     const url = new URL(urlString);

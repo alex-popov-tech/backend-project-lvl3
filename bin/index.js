@@ -2,7 +2,6 @@
 import commander from 'commander';
 import download from '../src/index.js';
 
-
 commander
   .description('Downloads passed page')
   .version('1.0.0')
