@@ -2,7 +2,7 @@ import { readFile } from 'fs-extra';
 import nock from 'nock';
 import { tmpdir } from 'os';
 import { sep } from 'path';
-import { mkdtemp } from 'fs/promises';
+import { promises } from 'fs';
 import download from '../src/index.js';
 
 nock.disableNetConnect();
@@ -10,7 +10,7 @@ nock.disableNetConnect();
 let outputDir;
 
 beforeEach(async () => {
-  outputDir = await mkdtemp(`${tmpdir()}${sep}page-loader_`);
+  outputDir = await promises.mkdtemp(`${tmpdir()}${sep}page-loader_`);
 });
 
 const shouldHaveContent = async (filepath, content) => expect(
