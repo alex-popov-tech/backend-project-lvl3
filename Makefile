@@ -1,5 +1,9 @@
+clean:
+	rm -rf node_modules; rm package-lock.json;
 install:
-	rm -rf node_modules; rm package-lock.json; npm install;
+	npm install
+setup:clean install
+	npm install
 publish:
 	npm publish --dry-run
 lint:
