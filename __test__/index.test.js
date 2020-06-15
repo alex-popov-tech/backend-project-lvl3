@@ -16,7 +16,6 @@ const shouldHaveContent = async (filepath, content) => expect(
   await fs.readFile(filepath).then((buffer) => buffer.toString().trim()),
 ).toEqual(content);
 
-
 test('page with resources happy path', async () => {
   nock('http://test.com')
     .get('/tryit')
