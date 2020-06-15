@@ -50,7 +50,7 @@ test('asset failed', async () => {
     .reply(200, '<html><head><script src="/script.js"></script></head></html>');
   nock('http://test.com')
     .get('/script.js')
-    .reply(200, '');
+    .reply(500, '');
   await expect(download('http://test.com', outputDir))
     .rejects
     .toThrow('Error ocurred when trying to download "http://test.com/script.js"\nReason - "Request failed with status code 500"');
