@@ -7,7 +7,7 @@
     "page-loader": "bin/index.js"
   },
   "scripts": {
-    "test": "jest"
+    "test": "npx -n --experimental-vm-modules jest"
   },
   "repository": {
     "type": "git",
@@ -17,10 +17,13 @@
     "hexlet",
     "nodejs"
   ],
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {}
+  },
   "author": "Alexander Popov",
   "license": "ISC",
   "devDependencies": {
-    "babel-jest": "^26.0.1",
     "eslint": "^7.2.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-import": "^2.20.2",
@@ -30,10 +33,6 @@
     "nock": "^12.0.3"
   },
   "dependencies": {
-    "@babel/cli": "^7.10.1",
-    "@babel/core": "^7.10.2",
-    "@babel/polyfill": "^7.10.1",
-    "@babel/preset-env": "^7.10.2",
     "axios": "^0.19.2",
     "axios-debug-log": "^0.7.0",
     "cheerio": "^1.0.0-rc.3",
