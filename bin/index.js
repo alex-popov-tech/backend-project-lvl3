@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import commander from 'commander';
-import download from '../src/index.js';
+import download from '../index.js';
 
 commander
   .description('Downloads passed page')
