@@ -2,7 +2,7 @@ import { promises as fs } from 'fs';
 import nock from 'nock';
 import { tmpdir } from 'os';
 import { sep } from 'path';
-import download from '../src/index.js';
+import download from '../index.js';
 
 nock.disableNetConnect();
 
@@ -19,7 +19,7 @@ const shouldHaveContent = async (filepath, content) => expect(
 test('page with resources happy path', async () => {
   nock('http://test.com')
     .get('/tryit')
-    .reply(200, '<html><head><script src="/js/script.js"></script><style src="/css/style.css"></style></head></html>');
+    .reply(200, '<html><head><script src="http://foo.io/bar.js"></script><script src="/js/script.js"></script><style src="/css/style.css"></style></head></html>');
   nock('http://test.com')
     .get('/tryit/css/style.css')
     .reply(200, '.foo color: red');
@@ -29,7 +29,7 @@ test('page with resources happy path', async () => {
   await download('http://test.com/tryit', outputDir);
   await shouldHaveContent(
     `${outputDir}/test-com-tryit.html`,
-    `<html><head><script src="${outputDir}/test-com-tryit_files/js-script.js"></script><style src="${outputDir}/test-com-tryit_files/css-style.css"></style></head><body></body></html>`,
+    `<html><head><script src="http://foo.io/bar.js"></script><script src="${outputDir}/test-com-tryit_files/js-script.js"></script><style src="${outputDir}/test-com-tryit_files/css-style.css"></style></head><body></body></html>`,
   );
   await shouldHaveContent(`${outputDir}/test-com-tryit_files/js-script.js`, 'console.log("hello!")');
   await shouldHaveContent(`${outputDir}/test-com-tryit_files/css-style.css`, '.foo color: red');

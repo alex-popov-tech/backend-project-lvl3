@@ -4,6 +4,10 @@
 [![Maintainability](https://api.codeclimate.com/v1/badges/e80544abda5ef636d6f3/maintainability)](https://codeclimate.com/github/alex-popov-tech/backend-project-lvl3/maintainability)
 [![Test Coverage](https://api.codeclimate.com/v1/badges/e80544abda5ef636d6f3/test_coverage)](https://codeclimate.com/github/alex-popov-tech/backend-project-lvl3/test_coverage)
 
+# How to use
+
+`page-loader -o $(pwd)/google https://www.google.com`
+
 # Demo
 
 ## Download page
