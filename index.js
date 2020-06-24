@@ -9,8 +9,8 @@ import path from 'path';
 
 const log = debug('page-loader');
 
-const download = (url) => axios.get(url)
-  .then(({ data }) => data)
+const download = (url) => axios.get(url, { responseType: 'arraybuffer' })
+  .then(({ data }) => data.toString())
   .catch(({ message }) => {
     throw new Error(`Error ocurred when trying to download "${url}"\nReason - "${message}"`);
   });
@@ -20,17 +20,22 @@ const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
     throw new Error(`Error ocurred when trying to write: "${filepath}"\nReason - "${message}"`);
   });
 
-const toSlug = ({ host, pathname }) => _.trim(`${host}${pathname}`, '/').replace(/[/.]/g, '-');
+const toSlug = ({
+  chunks,
+  trimChars = '/',
+  replaceFrom = /[/.]/g,
+  replaceTo = '-',
+}) => _.trim(chunks.join(''), trimChars).replace(replaceFrom, replaceTo);
 
 const toPageFilePath = (outputDir, url) => {
-  const filename = `${toSlug(url)}.html`;
+  const filename = `${toSlug({ chunks: [url.host, url.pathname] })}.html`;
   return path.resolve(outputDir, filename);
 };
 
 const toAssetFilePaths = (outputDir, url, elementInfos) => {
-  const dirpath = `${outputDir}/${toSlug(url)}_files`;
+  const dirpath = `${outputDir}/${toSlug({ chunks: [url.host, url.pathname] })}_files`;
   const assetFilePaths = elementInfos
-    .map(({ attrvalue }) => _.trim(attrvalue, '/').replace(/\//g, '-'))
+    .map(({ attrvalue }) => toSlug({ chunks: [attrvalue], replaceFrom: /[/]/g, replaceTo: '-' }))
     .map((filename) => path.resolve(dirpath, filename));
   return assetFilePaths;
 };
@@ -93,20 +98,12 @@ export default (urlString, outputDir) => download(urlString)
 
     const updatedHtml = replaceAttributes(html, elementInfos, assetFilePaths);
 
-    const assetContents = [];
     const tasks = elementInfos.map(({ absoluteUrl }) => absoluteUrl)
       .map((assetUrl, i) => ({
-        title: `Dowloading ${assetUrl}...`,
-        task: () => download(assetUrl).then((content) => {
-          assetContents[i] = content;
-        }),
+        title: `Dowloading ${assetUrl} to ${assetFilePaths[i]}...`,
+        task: () => download(assetUrl).then((content) => ensureFile(assetFilePaths[i], content)),
       }));
     const listr = new Listr(tasks, { concurrent: true });
-    return listr.run().then(() => ({
-      page: { filepath: pageFilePath, content: updatedHtml },
-      assets: assetContents.map((content, i) => ({ filepath: assetFilePaths[i], content })),
-    }));
-  }).then(({ page, assets }) => Promise.all([
-    ensureFile(page.filepath, page.content),
-    ...assets.map(({ filepath, content }) => ensureFile(filepath, content)),
-  ]));
+    return ensureFile(pageFilePath, updatedHtml)
+      .then(() => listr.run());
+  });

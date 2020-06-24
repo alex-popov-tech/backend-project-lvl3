@@ -16,7 +16,7 @@ lint-watch:
 	watch --interval 5 npx eslint .
 
 test:
-	npm test
+	DEBUG=axios,page:loader npm test -s
 
 test-coverage:
 	npm test -- --coverage
