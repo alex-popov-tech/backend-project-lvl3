@@ -21,89 +21,88 @@ const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
   });
 
 const toSlug = ({
-  chunks,
+  content,
   trimChars = '/',
   replaceFrom = /[/.]/g,
   replaceTo = '-',
-}) => _.trim(chunks.join(''), trimChars).replace(replaceFrom, replaceTo);
+}) => _.trim(content, trimChars).replace(replaceFrom, replaceTo);
 
-const toPageFilePath = (outputDir, url) => {
-  const filename = `${toSlug({ chunks: [url.host, url.pathname] })}.html`;
-  return path.resolve(outputDir, filename);
-};
-
-const toAssetFilePaths = (outputDir, url, elementInfos) => {
-  const dirpath = `${outputDir}/${toSlug({ chunks: [url.host, url.pathname] })}_files`;
-  const assetFilePaths = elementInfos
-    .map(({ attrvalue }) => toSlug({ chunks: [attrvalue], replaceFrom: /[/]/g, replaceTo: '-' }))
-    .map((filename) => path.resolve(dirpath, filename));
-  return assetFilePaths;
-};
-
-const toElementInfos = (html, baseurl) => {
+const getAssetInfos = (html, baseurl, slug, outputDir) => {
   const attributeMapping = {
     link: 'href',
     script: 'src',
     img: 'src',
     style: 'src',
   };
-  const toInfo = (element) => {
+  const toElementInfo = (element) => {
     const tagname = element.type;
     const attrname = attributeMapping[tagname];
     const attrvalue = element.attribs[attrname];
     return { tagname, attrname, attrvalue };
   };
+  const dirpath = `${outputDir}/${slug}_files`;
   return $('link,img,script,style', html)
     .toArray()
     .filter((element) => {
-      const { attrvalue } = toInfo(element);
+      const { attrvalue } = toElementInfo(element);
       return new URL(attrvalue, baseurl.origin).origin === baseurl.origin;
     })
     .map((element) => {
-      const { tagname, attrname, attrvalue } = toInfo(element);
+      const { tagname, attrname, attrvalue } = toElementInfo(element);
+      const absoluteUrl = `${_.trim(baseurl.origin + baseurl.pathname, '/')}${attrvalue}`;
+      const fileName = toSlug({ content: attrvalue, replaceFrom: /[/]/g });
+      const filePath = path.resolve(dirpath, fileName);
       return {
         tagname,
         attrname,
         attrvalue,
-        absoluteUrl: `${_.trim(baseurl.origin + baseurl.pathname, '/')}${attrvalue}`,
+        absoluteUrl,
+        filePath,
       };
     });
 };
 
 const replaceAttributes = (
   initialHtml,
-  elementInfos,
-  assetFilePaths,
-) => elementInfos
-  .reduce((html, { tagname, attrname, attrvalue }, i) => {
-    const filePath = assetFilePaths[i];
-    const $$ = $.load(html);
-    $$(`${tagname}[ ${attrname} = '${attrvalue}' ]`).attr(attrname, filePath);
-    return $$.html();
-  }, initialHtml);
+  assetInfos,
+) => assetInfos.reduce((html, {
+  tagname,
+  attrname,
+  attrvalue,
+  filePath,
+}) => {
+  const $$ = $.load(html);
+  $$(`${tagname}[ ${attrname} = '${attrvalue}' ]`).attr(attrname, filePath);
+  return $$.html();
+}, initialHtml);
 
-export default (urlString, outputDir) => download(urlString)
-  .then((html) => {
-    const url = new URL(urlString);
-    log(`Passed URL: ${url.toJSON()}`);
-    log(`Passed output dir: ${outputDir}`);
+export default (urlString, outputDir) => {
+  const url = new URL(urlString);
+  log(`Passed URL: ${url.toJSON()}`);
+  log(`Passed output dir: ${outputDir}`);
 
-    const elementInfos = toElementInfos(html, url);
-    log(`Assets found on a page: [${elementInfos.map((it) => JSON.stringify(it)).join('\n')}]`);
+  const slug = toSlug({ content: `${url.host}${url.pathname}` });
 
-    const pageFilePath = toPageFilePath(outputDir, url);
-    log(`Html file path: ${pageFilePath}`);
-    const assetFilePaths = toAssetFilePaths(outputDir, url, elementInfos);
-    log(`Assets file paths: [${assetFilePaths.join('\n')}]`);
+  const pageFileName = `${slug}.html`;
+  const pageFilePath = path.resolve(outputDir, pageFileName);
+  log(`Html file path: ${pageFilePath}`);
 
-    const updatedHtml = replaceAttributes(html, elementInfos, assetFilePaths);
+  const assetsDirName = `${slug}_files`;
+  const assetsDirPath = path.resolve(outputDir, assetsDirName);
+  log(`Assets dir path: ${assetsDirPath}`);
 
-    const tasks = elementInfos.map(({ absoluteUrl }) => absoluteUrl)
-      .map((assetUrl, i) => ({
-        title: `Dowloading ${assetUrl} to ${assetFilePaths[i]}...`,
-        task: () => download(assetUrl).then((content) => ensureFile(assetFilePaths[i], content)),
-      }));
-    const listr = new Listr(tasks, { concurrent: true });
-    return ensureFile(pageFilePath, updatedHtml)
-      .then(() => listr.run());
-  });
+  return download(url.href)
+    .then((html) => {
+      const assetInfos = getAssetInfos(html, url, slug, outputDir);
+      const updatedHtml = replaceAttributes(html, assetInfos);
+
+      const tasks = assetInfos
+        .map(({ filePath, absoluteUrl }) => ({
+          title: `Dowloading ${absoluteUrl} to ${filePath}...`,
+          task: () => download(absoluteUrl).then((content) => ensureFile(filePath, content)),
+        }));
+      const listr = new Listr(tasks, { concurrent: true });
+      return ensureFile(pageFilePath, updatedHtml)
+        .then(() => listr.run());
+    });
+};

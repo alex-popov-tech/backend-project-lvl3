@@ -41,7 +41,7 @@ test('page failed', async () => {
     .reply(403, '<html><body>403 Unauthorized</body></html>');
   await expect(download('http://test.com', outputDir))
     .rejects
-    .toThrow('Error ocurred when trying to download "http://test.com"\nReason - "Request failed with status code 403"');
+    .toThrow('Error ocurred when trying to download "http://test.com/"\nReason - "Request failed with status code 403"');
 });
 
 test('asset failed', async () => {
