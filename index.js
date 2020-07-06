@@ -9,10 +9,10 @@ import path from 'path';
 
 const log = debug('page-loader');
 
-const download = (url) => axios.get(url, { responseType: 'arraybuffer' })
+const download = (urlString) => axios.get(urlString, { responseType: 'arraybuffer' })
   .then(({ data }) => data.toString())
   .catch(({ message }) => {
-    throw new Error(`Error ocurred when trying to download "${url}"\nReason - "${message}"`);
+    throw new Error(`Error ocurred when trying to download "${urlString}"\nReason - "${message}"`);
   });
 
 const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
@@ -20,12 +20,10 @@ const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
     throw new Error(`Error ocurred when trying to write: "${filepath}"\nReason - "${message}"`);
   });
 
-const toSlug = ({
-  content,
-  trimChars = '/',
-  replaceFrom = /[/.]/g,
-  replaceTo = '-',
-}) => _.trim(content, trimChars).replace(replaceFrom, replaceTo);
+const toSlug = (content, replaceFrom = /[/.]/g, options = {
+  trimChars: '/',
+  replaceTo: '-',
+}) => _.trim(content, options.trimChars).replace(replaceFrom, options.replaceTo);
 
 const getAssetInfos = (html, baseurl, slug, outputDir) => {
   const attributeMapping = {
@@ -35,7 +33,7 @@ const getAssetInfos = (html, baseurl, slug, outputDir) => {
     style: 'src',
   };
   const toElementInfo = (element) => {
-    const tagname = element.type;
+    const tagname = element.name;
     const attrname = attributeMapping[tagname];
     const attrvalue = element.attribs[attrname];
     return { tagname, attrname, attrvalue };
@@ -43,20 +41,15 @@ const getAssetInfos = (html, baseurl, slug, outputDir) => {
   const dirpath = `${outputDir}/${slug}_files`;
   return $('link,img,script,style', html)
     .toArray()
-    .filter((element) => {
-      const { attrvalue } = toElementInfo(element);
-      return new URL(attrvalue, baseurl.origin).origin === baseurl.origin;
-    })
-    .map((element) => {
-      const { tagname, attrname, attrvalue } = toElementInfo(element);
-      const absoluteUrl = `${_.trim(baseurl.origin + baseurl.pathname, '/')}${attrvalue}`;
-      const fileName = toSlug({ content: attrvalue, replaceFrom: /[/]/g });
+    .map(toElementInfo)
+    .filter(({ attrvalue }) => attrvalue)
+    .map((info) => ({ ...info, url: new URL(info.attrvalue, baseurl.origin) }))
+    .filter(({ url }) => url.host === baseurl.host)
+    .map((info) => {
+      const fileName = toSlug(info.url.pathname, /[/]/g);
       const filePath = path.resolve(dirpath, fileName);
       return {
-        tagname,
-        attrname,
-        attrvalue,
-        absoluteUrl,
+        ...info,
         filePath,
       };
     });
@@ -76,12 +69,22 @@ const replaceAttributes = (
   return $$.html();
 }, initialHtml);
 
+const prepareAssets = (html, url, slug, outputDir) => {
+  const assetInfos = getAssetInfos(html, url, slug, outputDir);
+  log(assetInfos.map((it) => JSON.stringify(it)));
+  const updatedHtml = replaceAttributes(html, assetInfos);
+  return {
+    updatedHtml,
+    assetInfos,
+  };
+};
+
 export default (urlString, outputDir) => {
   const url = new URL(urlString);
-  log(`Passed URL: ${url.toJSON()}`);
+  log(`Passed URL: ${url}`);
   log(`Passed output dir: ${outputDir}`);
 
-  const slug = toSlug({ content: `${url.host}${url.pathname}` });
+  const slug = toSlug(`${url.host}${url.pathname}`);
 
   const pageFileName = `${slug}.html`;
   const pageFilePath = path.resolve(outputDir, pageFileName);
@@ -91,15 +94,14 @@ export default (urlString, outputDir) => {
   const assetsDirPath = path.resolve(outputDir, assetsDirName);
   log(`Assets dir path: ${assetsDirPath}`);
 
-  return download(url.href)
+  return download(url.toString())
     .then((html) => {
-      const assetInfos = getAssetInfos(html, url, slug, outputDir);
-      const updatedHtml = replaceAttributes(html, assetInfos);
+      const { updatedHtml, assetInfos } = prepareAssets(html, url, slug, outputDir);
 
       const tasks = assetInfos
-        .map(({ filePath, absoluteUrl }) => ({
-          title: `Dowloading ${absoluteUrl} to ${filePath}...`,
-          task: () => download(absoluteUrl).then((content) => ensureFile(filePath, content)),
+        .map(({ filePath, url }) => ({
+          title: `Dowloading ${url} to ${filePath}...`,
+          task: () => download(url.toString()).then((content) => ensureFile(filePath, content)),
         }));
       const listr = new Listr(tasks, { concurrent: true });
       return ensureFile(pageFilePath, updatedHtml)

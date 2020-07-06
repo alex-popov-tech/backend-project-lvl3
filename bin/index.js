@@ -8,11 +8,11 @@ commander
   .option('-o, --output <dirPath>', 'output dir path', process.cwd())
   .arguments('<url>')
   .action(async (url, { output }) => {
-    const error = await download(url, output).catch((err) => err);
-    if (error) {
-      console.error(error.message);
-      process.exit(1);
+    try {
+      await download(url, output);
+    } catch ({ message }) {
+      console.error(message);
+      process.exitCode = 1;
     }
-    process.exit(0);
   })
   .parse(process.argv);

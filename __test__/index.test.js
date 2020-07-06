@@ -21,10 +21,10 @@ test('page with resources happy path', async () => {
     .get('/tryit')
     .reply(200, '<html><head><script src="http://foo.io/bar.js"></script><script src="/js/script.js"></script><style src="/css/style.css"></style></head></html>');
   nock('http://test.com')
-    .get('/tryit/css/style.css')
+    .get('/css/style.css')
     .reply(200, '.foo color: red');
   nock('http://test.com')
-    .get('/tryit/js/script.js')
+    .get('/js/script.js')
     .reply(200, 'console.log("hello!")');
   await download('http://test.com/tryit', outputDir);
   await shouldHaveContent(
