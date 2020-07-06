@@ -99,9 +99,9 @@ export default (urlString, outputDir) => {
       const { updatedHtml, assetInfos } = prepareAssets(html, url, slug, outputDir);
 
       const tasks = assetInfos
-        .map(({ filePath, url }) => ({
-          title: `Dowloading ${url} to ${filePath}...`,
-          task: () => download(url.toString()).then((content) => ensureFile(filePath, content)),
+        .map(({ filePath, url: assetUrl }) => ({
+          title: `Dowloading ${assetUrl} to ${filePath}...`,
+          task: () => download(assetUrl.toString()).then((content) => ensureFile(filePath, content)),
         }));
       const listr = new Listr(tasks, { concurrent: true });
       return ensureFile(pageFilePath, updatedHtml)
