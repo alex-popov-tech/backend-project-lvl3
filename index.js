@@ -20,12 +20,9 @@ const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
     throw new Error(`Error ocurred when trying to write: "${filepath}"\nReason - "${message}"`);
   });
 
-const toSlug = (content, replaceFrom = /[/.]/g, options = {
-  trimChars: '/',
-  replaceTo: '-',
-}) => _.trim(content, options.trimChars).replace(replaceFrom, options.replaceTo);
+const toSlug = ({ host, pathname }) => _.trim(`${host}${pathname}`, '/').replace(/[/.]/g, '-');
 
-const getAssetInfos = (html, baseurl, slug, outputDir) => {
+const getAssetInfos = (html, baseurl, assetsDirPath) => {
   const attributeMapping = {
     link: 'href',
     script: 'src',
@@ -38,7 +35,6 @@ const getAssetInfos = (html, baseurl, slug, outputDir) => {
     const attrvalue = element.attribs[attrname];
     return { tagname, attrname, attrvalue };
   };
-  const dirpath = `${outputDir}/${slug}_files`;
   return $('link,img,script,style', html)
     .toArray()
     .map(toElementInfo)
@@ -46,8 +42,8 @@ const getAssetInfos = (html, baseurl, slug, outputDir) => {
     .map((info) => ({ ...info, url: new URL(info.attrvalue, baseurl.origin) }))
     .filter(({ url }) => url.host === baseurl.host)
     .map((info) => {
-      const fileName = toSlug(info.url.pathname, /[/]/g);
-      const filePath = path.resolve(dirpath, fileName);
+      const fileName = _.trim(info.url.pathname, '/').replace(/\//g, '-');
+      const filePath = path.resolve(assetsDirPath, fileName);
       return {
         ...info,
         filePath,
@@ -69,8 +65,8 @@ const replaceAttributes = (
   return $$.html();
 }, initialHtml);
 
-const prepareAssets = (html, url, slug, outputDir) => {
-  const assetInfos = getAssetInfos(html, url, slug, outputDir);
+const prepareAssets = (html, url, assetsDirPath) => {
+  const assetInfos = getAssetInfos(html, url, assetsDirPath);
   log(assetInfos.map((it) => JSON.stringify(it)));
   const updatedHtml = replaceAttributes(html, assetInfos);
   return {
@@ -84,7 +80,7 @@ export default (urlString, outputDir) => {
   log(`Passed URL: ${url}`);
   log(`Passed output dir: ${outputDir}`);
 
-  const slug = toSlug(`${url.host}${url.pathname}`);
+  const slug = toSlug(url);
 
   const pageFileName = `${slug}.html`;
   const pageFilePath = path.resolve(outputDir, pageFileName);
@@ -96,7 +92,7 @@ export default (urlString, outputDir) => {
 
   return download(url.toString())
     .then((html) => {
-      const { updatedHtml, assetInfos } = prepareAssets(html, url, slug, outputDir);
+      const { updatedHtml, assetInfos } = prepareAssets(html, url, assetsDirPath);
 
       const tasks = assetInfos
         .map(({ filePath, url: assetUrl }) => ({
