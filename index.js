@@ -15,7 +15,7 @@ const download = (urlString) => axios.get(urlString, { responseType: 'arraybuffe
     throw new Error(`Error ocurred when trying to download "${urlString}"\nReason - "${message}"`);
   });
 
-const ensureFile = (filepath, content) => fs.outputFile(filepath, content)
+const createIfNotExist = (filepath, content) => fs.outputFile(filepath, content)
   .catch(({ message }) => {
     throw new Error(`Error ocurred when trying to write: "${filepath}"\nReason - "${message}"`);
   });
@@ -98,10 +98,10 @@ export default (urlString, outputDir) => {
         .map(({ filePath, url: assetUrl }) => ({
           title: `Dowloading ${assetUrl} to ${filePath}...`,
           task: () => download(assetUrl.toString())
-            .then((content) => ensureFile(filePath, content)),
+            .then((content) => createIfNotExist(filePath, content)),
         }));
       const listr = new Listr(tasks, { concurrent: true });
-      return ensureFile(pageFilePath, updatedHtml)
+      return createIfNotExist(pageFilePath, updatedHtml)
         .then(() => listr.run());
     });
 };
